@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SmartStay — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#05080f; --surface:#080d18; --card:#0c1422; --border:#0f1930;
+  --cyan:#00d4c8; --green:#22c55e; --amber:#f59e0b; --orange:#f97316;
+  --blue:#3b82f6; --red:#ef4444; --violet:#8b5cf6;
+  --text:#e8edf5; --muted:#4a5568; --subtle:#0f1a30;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,212,200,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,200,.025) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;}
+.z1{position:relative;z-index:1;}
+
+/* ── Header ── */
+header{
+  background:rgba(8,13,24,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:0 28px;height:66px;
+  display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:200;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#0ea5e9,#00d4c8);
+  display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 18px rgba(0,212,200,.25);}
+.logo-name{font-family:'Bebas Neue';font-size:24px;letter-spacing:3px;color:#fff;line-height:1;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;font-family:monospace;}
+.hstats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+.spill{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:22px;
+  background:var(--subtle);border:1px solid var(--border);}
+.spill .sv{font-weight:700;font-size:14px;}
+.spill .sl{font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 6px var(--green);}
+.conn-badge{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-family:monospace;}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--red);transition:background .3s;}
+.cdot.on{background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ── Tabs ── */
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:2px;}
+.tab{padding:12px 20px;border:none;background:transparent;color:var(--muted);
+  font-family:'DM Sans';font-size:13px;font-weight:500;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.3px;}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+
+/* ── Layout ── */
+.main{display:flex;height:calc(100vh - 66px - 45px);}
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+.sidebar{width:300px;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── Energy Banner ── */
+.energy-banner{
+  background:linear-gradient(135deg,#0a0f1c 0%,#0f1a30 100%);
+  border:1px solid rgba(245,158,11,.25);border-radius:16px;
+  padding:20px 24px;margin-bottom:22px;
+  display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:center;
+}
+.energy-banner::before{content:'⚡';position:absolute;right:24px;top:50%;transform:translateY(-50%);
+  font-size:80px;opacity:.04;pointer-events:none;}
+.energy-main{position:relative;}
+.energy-label{font-size:10px;color:var(--amber);font-family:monospace;letter-spacing:2px;margin-bottom:4px;}
+.energy-big{font-family:'Bebas Neue';font-size:38px;color:#fbbf24;line-height:1;letter-spacing:1px;}
+.energy-sub{font-size:11px;color:var(--muted);font-family:monospace;margin-top:3px;}
+.energy-stat{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);
+  border-radius:10px;padding:12px 14px;text-align:center;}
+.energy-stat-val{font-family:'Bebas Neue';font-size:24px;line-height:1;}
+.energy-stat-lbl{font-size:10px;color:var(--muted);font-family:monospace;margin-top:2px;}
+.energy-rate{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:4px;}
+.rate-badge{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);
+  border-radius:8px;padding:6px 12px;font-family:monospace;font-size:11px;color:var(--amber);white-space:nowrap;}
+
+/* ── Occupancy bar ── */
+.occ-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;}
+.occ-bar{flex:1;height:8px;background:var(--subtle);border-radius:4px;overflow:hidden;display:flex;}
+.occ-seg{height:100%;transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+
+/* ── Block cards ── */
+.blocks-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:0;}
+.block-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
+}
+.block-card:hover{border-color:rgba(0,212,200,.3);box-shadow:0 0 24px rgba(0,212,200,.06);transform:translateY(-1px);}
+.block-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--bc,var(--border));transition:background .3s;}
+.block-a::before{--bc:var(--cyan);}
+.block-b::before{--bc:var(--violet);}
+.block-c::before{--bc:var(--amber);}
+.block-d::before{--bc:var(--green);}
+.block-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.block-letter{font-family:'Bebas Neue';font-size:52px;color:var(--bc,var(--cyan));line-height:1;letter-spacing:2px;}
+.block-name{font-size:12px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-top:4px;}
+.block-occ-num{font-family:'Bebas Neue';font-size:28px;color:#fff;text-align:right;line-height:1;}
+.block-occ-lbl{font-size:10px;color:var(--muted);font-family:monospace;text-align:right;}
+.block-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.bm{background:var(--subtle);border-radius:8px;padding:8px;text-align:center;}
+.bm-val{font-size:15px;font-weight:700;line-height:1;}
+.bm-lbl{font-size:9px;color:var(--muted);font-family:monospace;margin-top:2px;letter-spacing:.5px;}
+.block-bar{height:6px;background:var(--subtle);border-radius:3px;overflow:hidden;display:flex;}
+.block-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.block-mini-rooms{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.mini-room{
+  width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:9px;
+  font-family:monospace;font-weight:700;transition:all .2s;
+}
+.mr-occupied   {background:rgba(0,212,200,.12);  color:var(--cyan);  border-color:rgba(0,212,200,.25);}
+.mr-empty      {background:var(--subtle);         color:var(--muted); }
+.mr-cleaning   {background:rgba(34,197,94,.12);   color:var(--green); border-color:rgba(34,197,94,.25);}
+.mr-maintenance{background:rgba(249,115,22,.12);  color:var(--orange);border-color:rgba(249,115,22,.25);}
+.block-expand-hint{font-size:10px;color:var(--muted);font-family:monospace;margin-top:8px;text-align:center;opacity:.6;}
+
+/* ── Room detail (drill-down) ── */
+.back-btn{display:flex;align-items:center;gap:8px;background:none;border:none;
+  color:var(--cyan);cursor:pointer;font-family:'DM Sans';font-size:13px;
+  padding:0;margin-bottom:18px;font-weight:500;}
+.block-detail-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.bdk-letter{font-family:'Bebas Neue';font-size:44px;line-height:1;}
+.bdk-name{font-size:14px;color:var(--muted);font-family:monospace;letter-spacing:1px;}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.room-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;}
+.room-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--rc,var(--border));}
+.rc-occupied   {--rc:var(--cyan);  border-color:rgba(0,212,200,.2);}
+.rc-empty      {--rc:var(--muted);}
+.rc-cleaning   {--rc:var(--green); border-color:rgba(34,197,94,.2); box-shadow:0 0 16px rgba(34,197,94,.06);}
+.rc-maintenance{--rc:var(--orange);border-color:rgba(249,115,22,.2);box-shadow:0 0 16px rgba(249,115,22,.06);}
+.rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.rc-num{font-family:'Bebas Neue';font-size:28px;color:#fff;line-height:1;}
+.rc-floor{font-size:9px;color:var(--muted);font-family:monospace;}
+.rc-badge{padding:2px 9px;border-radius:18px;font-size:9px;font-family:monospace;border:1px solid;}
+.rb-occupied   {background:rgba(0,212,200,.08); color:var(--cyan);  border-color:rgba(0,212,200,.25);}
+.rb-empty      {background:rgba(74,85,104,.08); color:var(--muted); border-color:rgba(74,85,104,.2);}
+.rb-cleaning   {background:rgba(34,197,94,.08); color:var(--green); border-color:rgba(34,197,94,.25);}
+.rb-maintenance{background:rgba(249,115,22,.08);color:var(--orange);border-color:rgba(249,115,22,.25);}
+.rc-guest{background:var(--subtle);border-radius:9px;padding:9px 11px;margin-bottom:9px;}
+.rc-guest-name{font-size:12px;font-weight:600;}
+.rc-guest-ph{font-size:10px;color:var(--muted);font-family:monospace;}
+.rc-systems{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;}
+.sys-b{background:var(--subtle);border-radius:8px;padding:7px 9px;}
+.sys-lbl{font-size:8px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-bottom:2px;}
+.sys-val{font-size:12px;font-weight:700;}
+.sys-on  {color:var(--cyan);}
+.sys-idle{color:var(--amber);}
+.sys-off {color:var(--muted);}
+.staff-badge{border-radius:8px;padding:7px 10px;margin-bottom:7px;}
+.staff-badge.cleaning   {background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2);}
+.staff-badge.maintenance{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);}
+.staff-badge-role{font-size:9px;font-family:monospace;letter-spacing:1px;font-weight:700;}
+.staff-badge.cleaning    .staff-badge-role{color:var(--green);}
+.staff-badge.maintenance .staff-badge-role{color:var(--orange);}
+.staff-badge-name{font-size:11px;font-weight:600;margin-top:1px;}
+
+/* ── BI ── */
+.bi-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.bi-title{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;margin-bottom:2px;}
+.bi-sub{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:18px;}
+.bi-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.bi-filter{padding:5px 14px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-size:11px;font-family:monospace;letter-spacing:.5px;text-transform:uppercase;transition:all .15s;}
+.bi-filter.active{background:#1e3a5f;border-color:var(--blue);color:var(--blue);}
+.bi-filter-group{display:flex;gap:6px;flex-wrap:wrap;}
+.bi-filter-label{font-size:10px;color:var(--muted);font-family:monospace;align-self:center;letter-spacing:1px;}
+.bi-select{background:var(--subtle);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:5px 10px;font-size:11px;font-family:monospace;cursor:pointer;outline:none;}
+.bi-select option{background:var(--surface);}
+.export-btns{display:flex;gap:6px;margin-left:auto;}
+.exp-btn{padding:6px 14px;border-radius:20px;border:1px solid;font-size:11px;
+  font-family:monospace;cursor:pointer;background:transparent;transition:all .15s;}
+.exp-csv {border-color:var(--green); color:var(--green);}
+.exp-xls {border-color:var(--cyan);  color:var(--cyan);}
+.exp-pdf {border-color:var(--red);   color:var(--red);}
+.exp-btn:hover{opacity:.75;}
+.bi-table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;}
+th{padding:8px 10px;color:var(--muted);text-align:left;font-weight:600;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:.5px;}
+td{padding:9px 10px;border-bottom:1px solid rgba(15,25,48,.8);}
+tr:hover td{background:rgba(255,255,255,.01);}
+.type-badge{padding:2px 9px;border-radius:18px;font-size:10px;border:1px solid;}
+.type-c{background:#052e16;color:#4ade80;border-color:#166534;}
+.type-m{background:#1c1917;color:#fb923c;border-color:#9a3412;}
+.bi-empty{color:var(--border);text-align:center;padding:60px;font-size:13px;}
+
+/* ── Sidebar ── */
+.sb-hd{padding:16px 18px 10px;border-bottom:1px solid var(--border);}
+.sb-title{font-family:'Bebas Neue';font-size:17px;letter-spacing:2px;}
+.sb-sub{font-size:10px;color:var(--muted);font-family:monospace;margin-top:3px;}
+.event-feed{flex:1;overflow-y:auto;padding:10px;}
+.event-item{display:flex;gap:8px;padding:9px 11px;margin-bottom:7px;
+  background:var(--card);border-radius:9px;border-left:2px solid var(--border);animation:sli .3s ease;}
+@keyframes sli{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.event-item.guest_in   {border-left-color:var(--cyan);}
+.event-item.guest_out  {border-left-color:var(--amber);}
+.event-item.cleaning   {border-left-color:var(--green);}
+.event-item.maintenance{border-left-color:var(--orange);}
+.event-item.complete   {border-left-color:var(--violet);}
+.event-txt{font-size:11px;color:var(--text);line-height:1.45;}
+.event-time{font-size:9px;color:var(--muted);font-family:monospace;margin-top:2px;}
+.sb-footer{padding:10px 14px;border-top:1px solid var(--border);}
+
+/* ── WhatsApp toast ── */
+.toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--card);
+  border:1px solid rgba(37,211,102,.3);border-radius:14px;padding:16px 20px;max-width:320px;
+  box-shadow:0 20px 50px rgba(0,0,0,.7);animation:tIn .45s cubic-bezier(.16,1,.3,1);}
+@keyframes tIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-icon{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.toast-body{background:var(--subtle);border-radius:9px;padding:10px 12px;
+  font-size:11px;color:#d1fae5;line-height:1.55;border-left:3px solid #25d366;margin-top:10px;}
+.toast-bar{position:absolute;bottom:0;left:0;height:3px;background:linear-gradient(90deg,#25d366,#128c7e);
+  border-radius:0 0 14px 14px;animation:shrink 7s linear forwards;}
+@keyframes shrink{from{width:100%}to{width:0}}
+
+/* ── Staff tab ── */
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.staff-sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.staff-sec-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:14px;}
+.staff-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.staff-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0;}
+.staff-name{font-size:12px;font-weight:600;}
+.staff-id{font-size:10px;color:var(--muted);font-family:monospace;}
+.savings-box{margin-top:18px;background:var(--subtle);border:1px solid rgba(245,158,11,.2);
+  border-radius:10px;padding:14px;}
+.savings-lbl{font-size:10px;color:var(--amber);font-family:monospace;letter-spacing:1px;margin-bottom:6px;}
+.savings-big{font-family:'Bebas Neue';font-size:32px;color:#fbbf24;line-height:1;}
+.savings-sub{font-size:10px;color:var(--muted);font-family:monospace;margin-top:3px;}
+
+/* ── Report modal ── */
+.modal-overlay{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.8);
+  backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:28px;width:90%;max-width:480px;animation:mIn .35s cubic-bezier(.16,1,.3,1);}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;margin-bottom:18px;}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body class="z1">
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏨</div>
+    <div>
+      <div class="logo-name">SMARTSTAY</div>
+      <div class="logo-sub">HA YELLOW · TOKEN SYSTEM · LIVE</div>
+    </div>
+  </div>
+  <div class="conn-badge"><div class="cdot" id="cd"></div><span id="cl">Conectando…</span></div>
+  <div class="hstats" id="hstats"></div>
+  <div style="display:flex;align-items:center;gap:5px;margin-left:8px;">
+    <div class="live-dot"></div>
+    <span style="font-size:10px;color:var(--muted);font-family:monospace;">EN VIVO</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="setTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="setTab('bi',this)">Reportes BI</button>
+  <button class="tab" onclick="setTab('staff',this)">Personal</button>
+</div>
+
+<div class="main">
+  <div class="content" id="content"></div>
+  <div class="sidebar">
+    <div class="sb-hd">
+      <div class="sb-title">EVENTOS EN VIVO</div>
+      <div class="sb-sub" id="evCount">0 eventos</div>
+    </div>
+    <div class="event-feed" id="evFeed"><div style="color:var(--border);text-align:center;padding:40px;font-family:monospace;font-size:11px;">Esperando eventos…</div></div>
+    <div class="sb-footer">
+      <div style="font-size:9px;color:var(--muted);font-family:monospace;letter-spacing:1px;">WHATSAPP: <span id="waCount" style="color:var(--green)">0</span></div>
+      <div id="waLog" style="max-height:90px;overflow-y:auto;margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toastBox"></div>
+<div id="modalBox"></div>
+
+<script>
+const KWH_PRICE=9.53, HVAC_KWH=1.5, LIGHTS_KWH=0.15, TOTAL_KWH=HVAC_KWH+LIGHTS_KWH;
+const BLOCK_COLORS={A:'var(--cyan)',B:'var(--violet)',C:'var(--amber)',D:'var(--green)'};
+const BLOCK_NAMES={A:'Ala Norte',B:'Ala Sur',C:'Ala Este',D:'Ala Oeste'};
+const STATUS_LABEL={occupied:'Ocupada',empty:'Disponible',cleaning:'Limpieza',maintenance:'Mantenimiento'};
+
+let state={rooms:[],events:[],biLogs:[],whatsappLog:[],staff:[],energy:{kwh:0,dop:0}};
+let currentTab='dashboard', activeBlock=null;
+let biFilters={type:'all',block:'all',staff:'all',date:'all'};
+let ws, lastWaLen=0;
+
+// ── WebSocket ──────────────────────────────────────────────
+function connect(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}`);
+  ws.onopen=()=>{document.getElementById('cd').classList.add('on');document.getElementById('cl').textContent='Conectado';};
+  ws.onmessage=e=>{
+    const {type,payload}=JSON.parse(e.data);
+    if(type==='STATE'){
+      const prev=lastWaLen;
+      state=payload; lastWaLen=state.whatsappLog?.length||0;
+      render();
+      if(state.whatsappLog?.length>prev) showToast(state.whatsappLog[0]);
+    }
+  };
+  ws.onclose=()=>{document.getElementById('cd').classList.remove('on');document.getElementById('cl').textContent='Reconectando…';setTimeout(connect,2500);};
+}
+connect();
+
+// Refresh energy every 30s
+setInterval(()=>{ if(currentTab==='dashboard') renderEnergyBanner(); },30000);
+
+function setTab(t,el){
+  currentTab=t; activeBlock=null;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active'); render();
+}
+
+// ── Render router ──────────────────────────────────────────
+function render(){
+  renderStats();
+  renderSidebar();
+  if(currentTab==='dashboard') renderDashboard();
+  else if(currentTab==='bi')   renderBI();
+  else if(currentTab==='staff') renderStaff();
+}
+
+function renderStats(){
+  const r=state.rooms||[];
+  const e=state.energy||{kwh:0,dop:0};
+  const pills=[
+    {val:r.filter(x=>x.status==='occupied').length,  lbl:'Ocupadas', c:'var(--cyan)'},
+    {val:r.filter(x=>x.status==='cleaning').length,  lbl:'Limpieza', c:'var(--green)'},
+    {val:r.filter(x=>x.status==='maintenance').length,lbl:'Mant.',   c:'var(--orange)'},
+    {val:r.filter(x=>x.hvacMode==='idle').length,    lbl:'HVAC Idle',c:'var(--amber)'},
+  ];
+  document.getElementById('hstats').innerHTML=pills.map(p=>`
+    <div class="spill"><span class="sv" style="color:${p.c}">${p.val}</span><span class="sl">${p.lbl}</span></div>
+  `).join('');
+}
+
+// ── Energy Banner ──────────────────────────────────────────
+function renderEnergyBanner(){
+  const e=state.energy||{kwh:0,dop:0};
+  const r=state.rooms||[];
+  const idleNow=r.filter(x=>x.hvacMode==='idle').length;
+  const hourlyRate=idleNow*TOTAL_KWH*KWH_PRICE;
+  return `
+  <div class="energy-banner" style="position:relative;">
+    <div class="energy-main">
+      <div class="energy-label">⚡ AHORRO ENERGÉTICO HOY</div>
+      <div class="energy-big">DOP $${Number(e.dop).toFixed(2)}</div>
+      <div class="energy-sub">${Number(e.kwh).toFixed(3)} kWh ahorrados · HVAC + Luminarias</div>
+    </div>
+    <div class="energy-stat">
+      <div class="energy-stat-val" style="color:var(--amber)">${idleNow}</div>
+      <div class="energy-stat-lbl">HAB. IDLE</div>
+    </div>
+    <div class="energy-stat">
+      <div class="energy-stat-val" style="color:var(--cyan)">${Number(hourlyRate).toFixed(2)}</div>
+      <div class="energy-stat-lbl">DOP$/HORA</div>
+    </div>
+    <div class="energy-rate">
+      <div class="rate-badge">DOP $9.53 / kWh</div>
+      <div class="rate-badge">HVAC 1.5 + Luces 0.15 kWh</div>
+      <div class="rate-badge" style="color:var(--green);border-color:var(--green)44;">● Tiempo real</div>
+    </div>
+  </div>`;
+}
+
+// ── Dashboard (blocks) ──────────────────────────────────────
+function renderDashboard(){
+  const rooms=state.rooms||[];
+  if(activeBlock){
+    renderBlockDetail(activeBlock); return;
+  }
+  const occ   =rooms.filter(r=>r.status==='occupied').length;
+  const cln   =rooms.filter(r=>r.status==='cleaning').length;
+  const mnt   =rooms.filter(r=>r.status==='maintenance').length;
+  const emp   =rooms.filter(r=>r.status==='empty').length;
+  const total =rooms.length;
+  const pct   =Math.round(((occ+cln+mnt)/total)*100);
+
+  const blocks=['A','B','C','D'].map(b=>{
+    const br=rooms.filter(r=>r.block===b);
+    const bocc=br.filter(r=>['occupied','cleaning','maintenance'].includes(r.status)).length;
+    const bcln=br.filter(r=>r.status==='cleaning').length;
+    const bmnt=br.filter(r=>r.status==='maintenance').length;
+    const bidle=br.filter(r=>r.hvacMode==='idle').length;
+    return {b,br,bocc,bcln,bmnt,bidle,total:br.length};
+  });
+
+  document.getElementById('content').innerHTML=`
+    ${renderEnergyBanner()}
+    <div class="occ-bar-wrap">
+      <span style="font-size:10px;color:var(--muted);font-family:monospace;letter-spacing:1px;white-space:nowrap;">OCUPACIÓN TOTAL</span>
+      <div class="occ-bar">
+        <div class="occ-seg" style="width:${(occ/total)*100}%;background:var(--cyan)"></div>
+        <div class="occ-seg" style="width:${(cln/total)*100}%;background:var(--green)"></div>
+        <div class="occ-seg" style="width:${(mnt/total)*100}%;background:var(--orange)"></div>
+        <div class="occ-seg" style="width:${(emp/total)*100}%;background:var(--subtle)"></div>
+      </div>
+      <span style="font-family:'Bebas Neue';font-size:22px;color:var(--cyan);">${pct}%</span>
+      <span style="font-size:10px;color:var(--muted);font-family:monospace;">${occ+cln+mnt}/${total}</span>
+    </div>
+    <div class="blocks-grid">
+      ${blocks.map(({b,br,bocc,bcln,bmnt,bidle,total})=>`
+      <div class="block-card block-${b.toLowerCase()}" onclick="drillBlock('${b}')">
+        <div class="block-header">
+          <div>
+            <div class="block-letter" style="color:${BLOCK_COLORS[b]}">${b}</div>
+            <div class="block-name">${BLOCK_NAMES[b]}</div>
+          </div>
+          <div>
+            <div class="block-occ-num">${bocc}/${total}</div>
+            <div class="block-occ-lbl">OCUPADAS</div>
+          </div>
+        </div>
+        <div class="block-metrics">
+          <div class="bm"><div class="bm-val" style="color:var(--cyan)">${bocc}</div><div class="bm-lbl">OCUP</div></div>
+          <div class="bm"><div class="bm-val" style="color:var(--green)">${bcln}</div><div class="bm-lbl">LIMP</div></div>
+          <div class="bm"><div class="bm-val" style="color:var(--orange)">${bmnt}</div><div class="bm-lbl">MANT</div></div>
+          <div class="bm"><div class="bm-val" style="color:var(--amber)">${bidle}</div><div class="bm-lbl">IDLE</div></div>
+        </div>
+        <div class="block-bar">
+          <div class="block-bar-fill" style="width:${(bocc/total)*100}%;background:${BLOCK_COLORS[b]}"></div>
+        </div>
+        <div class="block-mini-rooms">
+          ${br.map(r=>`<div class="mini-room mr-${r.status}" title="Hab. ${r.number}">${r.number}</div>`).join('')}
+        </div>
+        <div class="block-expand-hint">Click para ver detalle →</div>
+      </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function drillBlock(b){
+  activeBlock=b; renderBlockDetail(b);
+}
+
+function renderBlockDetail(b){
+  const rooms=(state.rooms||[]).filter(r=>r.block===b);
+  const color=BLOCK_COLORS[b];
+  document.getElementById('content').innerHTML=`
+    ${renderEnergyBanner()}
+    <button class="back-btn" onclick="activeBlock=null;render();">← Volver a todos los bloques</button>
+    <div class="block-detail-header">
+      <div class="bdk-letter" style="color:${color}">Ala ${b}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;">${BLOCK_NAMES[b]}</div>
+        <div class="bdk-name">${rooms.filter(r=>['occupied','cleaning','maintenance'].includes(r.status)).length}/${rooms.length} habitaciones ocupadas</div>
+      </div>
+    </div>
+    <div class="rooms-grid">
+      ${rooms.map(r=>{
+        const hvacOn=r.hvacMode==='comfort';
+        return `
+        <div class="room-card rc-${r.status}">
+          <div class="rc-header">
+            <div>
+              <div style="font-size:9px;color:var(--muted);font-family:monospace;letter-spacing:2px;">HAB.</div>
+              <div class="rc-num">${r.number}</div>
+              <div class="rc-floor">Piso ${r.floor}</div>
+            </div>
+            <span class="rc-badge rb-${r.status}">${STATUS_LABEL[r.status]||r.status}</span>
+          </div>
+          <div class="rc-guest">
+            <div style="font-size:9px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-bottom:3px;">HUÉSPED</div>
+            <div class="rc-guest-name">${r.guest.name}</div>
+            <div class="rc-guest-ph">${r.guest.phone}</div>
+          </div>
+          <div class="rc-systems">
+            <div class="sys-b">
+              <div class="sys-lbl">HVAC</div>
+              <div class="sys-val ${hvacOn?'sys-on':'sys-idle'}">${hvacOn?'❄️ Comfort':'😴 Idle'}</div>
+              <div style="font-size:9px;color:var(--muted);font-family:monospace;">${hvacOn?'72°F':'78°F'}</div>
+            </div>
+            <div class="sys-b">
+              <div class="sys-lbl">LUCES</div>
+              <div class="sys-val ${r.lightsOn?'sys-on':'sys-off'}">${r.lightsOn?'💡 ON':'🌑 OFF'}</div>
+              <div style="font-size:9px;color:var(--muted);font-family:monospace;">${r.lightsOn?'Activas':'Apagadas'}</div>
+            </div>
+          </div>
+          ${r.activeStaff?`
+          <div class="staff-badge ${r.activeStaff.role}">
+            <div class="staff-badge-role">${r.activeStaff.role==='cleaning'?'🧹 EN LIMPIEZA':'🔧 EN MANTENIMIENTO'}</div>
+            <div class="staff-badge-name">${r.activeStaff.name}</div>
+          </div>`:''}
+          <div style="font-size:8px;color:var(--muted);font-family:monospace;margin-top:6px;">
+            ${r.tokenId} · ${r.guestPresent?'● Presente':'○ Ausente'}
+          </div>
+        </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ── BI ─────────────────────────────────────────────────────
+function renderBI(){
+  const logs=state.biLogs||[];
+  const allStaff=[...new Set(logs.map(l=>l.staff))];
+  const allDates=[...new Set(logs.map(l=>l.date).filter(Boolean))];
+
+  let filtered=logs;
+  if(biFilters.type!=='all') filtered=filtered.filter(l=>l.type===biFilters.type);
+  if(biFilters.block!=='all') filtered=filtered.filter(l=>l.block===biFilters.block);
+  if(biFilters.staff!=='all') filtered=filtered.filter(l=>l.staff===biFilters.staff);
+  if(biFilters.date!=='all') filtered=filtered.filter(l=>l.date===biFilters.date);
+
+  document.getElementById('content').innerHTML=`
+  <div class="bi-wrap">
+    <div class="bi-title">REGISTROS BI</div>
+    <div class="bi-sub">Business Intelligence · ${filtered.length} de ${logs.length} registros</div>
+    <div class="bi-filters">
+      <div class="bi-filter-group">
+        <span class="bi-filter-label">TIPO:</span>
+        ${['all','cleaning','maintenance'].map(f=>`
+          <button class="bi-filter ${biFilters.type===f?'active':''}" onclick="setBiFilter('type','${f}')">${f==='all'?'Todos':f==='cleaning'?'Limpieza':'Mantenimiento'}</button>
+        `).join('')}
+      </div>
+      <div class="bi-filter-group">
+        <span class="bi-filter-label">ALA:</span>
+        <select class="bi-select" onchange="setBiFilter('block',this.value)">
+          <option value="all" ${biFilters.block==='all'?'selected':''}>Todas</option>
+          ${['A','B','C','D'].map(b=>`<option value="${b}" ${biFilters.block===b?'selected':''}>${b} — ${BLOCK_NAMES[b]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="bi-filter-group">
+        <span class="bi-filter-label">EMPLEADO:</span>
+        <select class="bi-select" onchange="setBiFilter('staff',this.value)">
+          <option value="all" ${biFilters.staff==='all'?'selected':''}>Todos</option>
+          ${allStaff.map(s=>`<option value="${s}" ${biFilters.staff===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="bi-filter-group">
+        <span class="bi-filter-label">FECHA:</span>
+        <select class="bi-select" onchange="setBiFilter('date',this.value)">
+          <option value="all" ${biFilters.date==='all'?'selected':''}>Todas</option>
+          ${allDates.map(d=>`<option value="${d}" ${biFilters.date===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+      <div class="export-btns">
+        <button class="exp-btn exp-csv" onclick="exportCSV()">↓ CSV</button>
+        <button class="exp-btn exp-xls" onclick="exportXLS()">↓ Excel</button>
+        <button class="exp-btn exp-pdf" onclick="exportPDF()">↓ PDF</button>
+      </div>
+    </div>
+    ${filtered.length===0?`<div class="bi-empty">Sin registros para los filtros seleccionados</div>`:`
+    <div class="bi-table-wrap">
+      <table>
+        <thead><tr>
+          <th>Habitación</th><th>Ala</th><th>Personal</th><th>Tipo</th>
+          <th>Inicio</th><th>Fin</th><th>Duración</th><th>Fecha</th>
+        </tr></thead>
+        <tbody>
+          ${[...filtered].reverse().map(l=>`
+          <tr>
+            <td style="color:#fff;font-weight:700">${l.room}</td>
+            <td style="color:${BLOCK_COLORS[l.block]||'var(--muted)'}">${l.block}</td>
+            <td style="color:var(--text)">${l.staff}</td>
+            <td><span class="type-badge type-${l.type==='cleaning'?'c':'m'}">${l.type==='cleaning'?'Limpieza':'Mant.'}</span></td>
+            <td style="color:var(--muted)">${l.start}</td>
+            <td style="color:var(--muted)">${l.end||'<span style="color:var(--amber)">● En curso</span>'}</td>
+            <td style="color:${l.duration?'var(--cyan)':'var(--amber)'}">${l.duration||'…'}</td>
+            <td style="color:var(--muted)">${l.date||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+
+function setBiFilter(key,val){
+  biFilters[key]=val; renderBI();
+}
+
+function getFilteredLogs(){
+  let logs=state.biLogs||[];
+  if(biFilters.type!=='all') logs=logs.filter(l=>l.type===biFilters.type);
+  if(biFilters.block!=='all') logs=logs.filter(l=>l.block===biFilters.block);
+  if(biFilters.staff!=='all') logs=logs.filter(l=>l.staff===biFilters.staff);
+  if(biFilters.date!=='all') logs=logs.filter(l=>l.date===biFilters.date);
+  return logs;
+}
+
+function exportCSV(){
+  const logs=getFilteredLogs();
+  const rows=['Habitacion,Ala,Personal,Tipo,Inicio,Fin,Duracion,Fecha'];
+  logs.forEach(l=>rows.push(`${l.room},${l.block},${l.staff},${l.type},"${l.start}","${l.end||'En curso'}",${l.duration||'-'},${l.date||''}`));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`smartstay_bi_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+
+function exportXLS(){
+  const logs=getFilteredLogs();
+  let xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+    xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="SmartStay BI"><Table>
+  <Row><Cell><Data ss:Type="String">Habitacion</Data></Cell><Cell><Data ss:Type="String">Ala</Data></Cell>
+  <Cell><Data ss:Type="String">Personal</Data></Cell><Cell><Data ss:Type="String">Tipo</Data></Cell>
+  <Cell><Data ss:Type="String">Inicio</Data></Cell><Cell><Data ss:Type="String">Fin</Data></Cell>
+  <Cell><Data ss:Type="String">Duracion</Data></Cell><Cell><Data ss:Type="String">Fecha</Data></Cell></Row>`;
+  logs.forEach(l=>{
+    xml+=`<Row><Cell><Data ss:Type="String">${l.room}</Data></Cell><Cell><Data ss:Type="String">${l.block}</Data></Cell>
+    <Cell><Data ss:Type="String">${l.staff}</Data></Cell><Cell><Data ss:Type="String">${l.type}</Data></Cell>
+    <Cell><Data ss:Type="String">${l.start}</Data></Cell><Cell><Data ss:Type="String">${l.end||'En curso'}</Data></Cell>
+    <Cell><Data ss:Type="String">${l.duration||'-'}</Data></Cell><Cell><Data ss:Type="String">${l.date||''}</Data></Cell></Row>`;
+  });
+  xml+=`</Table></Worksheet></Workbook>`;
+  const blob=new Blob([xml],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`smartstay_bi_${new Date().toISOString().slice(0,10)}.xls`; a.click();
+}
+
+function exportPDF(){
+  const logs=getFilteredLogs();
+  const energy=state.energy||{kwh:0,dop:0};
+  const w=window.open('','_blank');
+  const rows=logs.reverse().map(l=>`
+    <tr>
+      <td>${l.room}</td><td>${l.block}</td><td>${l.staff}</td>
+      <td><span class="badge ${l.type}">${l.type==='cleaning'?'Limpieza':'Mant.'}</span></td>
+      <td>${l.start}</td><td>${l.end||'En curso'}</td>
+      <td>${l.duration||'…'}</td><td>${l.date||'—'}</td>
+    </tr>`).join('');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>SmartStay BI Report</title>
+  <style>
+    body{font-family:Georgia,serif;background:#fff;color:#1e293b;padding:32px;max-width:900px;margin:0 auto;}
+    .header{background:#0a0f1c;color:#00d4c8;padding:28px;border-radius:10px;margin-bottom:24px;text-align:center;}
+    h1{font-size:28px;letter-spacing:4px;margin:0;}
+    .sub{color:#475569;font-size:11px;margin-top:6px;}
+    .kpis{display:flex;gap:12px;margin-bottom:20px;}
+    .kpi{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;text-align:center;}
+    .kpi .v{font-size:24px;font-weight:700;color:#0a0f1c;}
+    .kpi .l{font-size:10px;color:#94a3b8;margin-top:2px;}
+    .energy{background:#0a0f1c;color:#f59e0b;padding:16px;border-radius:8px;text-align:center;margin-bottom:20px;}
+    .energy .big{font-size:32px;font-weight:700;}
+    .energy .s{font-size:12px;color:#64748b;margin-top:4px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    th{background:#f1f5f9;padding:8px;text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;}
+    td{padding:8px;border-bottom:1px solid #f1f5f9;}
+    .badge{padding:2px 8px;border-radius:10px;font-size:10px;}
+    .cleaning{background:#dcfce7;color:#166534;}
+    .maintenance{background:#ffedd5;color:#9a3412;}
+    .footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:24px;padding-top:16px;border-top:1px solid #f1f5f9;}
+    @media print{body{padding:0;}}
+  </style></head><body>
+  <div class="header"><h1>SMARTSTAY</h1><div class="sub">REPORTE BI · Generado: ${new Date().toLocaleString('es-DO')}</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">${logs.length}</div><div class="l">Registros</div></div>
+    <div class="kpi"><div class="v">${logs.filter(l=>l.type==='cleaning').length}</div><div class="l">Limpiezas</div></div>
+    <div class="kpi"><div class="v">${logs.filter(l=>l.type==='maintenance').length}</div><div class="l">Mantenimientos</div></div>
+    <div class="kpi"><div class="v">${logs.filter(l=>!l.end).length}</div><div class="l">En curso</div></div>
+  </div>
+  <div class="energy">
+    <div class="big">DOP $${Number(energy.dop).toFixed(2)}</div>
+    <div class="s">${Number(energy.kwh).toFixed(3)} kWh ahorrados · DOP$9.53/kWh · HVAC + Luminarias</div>
+  </div>
+  <table><thead><tr><th>Hab.</th><th>Ala</th><th>Personal</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Fecha</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  <div class="footer">SmartStay Hotel Intelligence · HA Yellow Token System · Filtros: Tipo=${biFilters.type} Ala=${biFilters.block} Empleado=${biFilters.staff} Fecha=${biFilters.date}</div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+// ── Staff tab ──────────────────────────────────────────────
+function renderStaff(){
+  const staff=state.staff||[];
+  const cleaning=staff.filter(s=>s.role==='cleaning');
+  const maintenance=staff.filter(s=>s.role==='maintenance');
+  const idleNow=(state.rooms||[]).filter(r=>r.hvacMode==='idle').length;
+  const e=state.energy||{kwh:0,dop:0};
+  const sec=(title,color,list)=>`
+    <div class="staff-sec">
+      <div class="staff-sec-title" style="color:${color}">${title}</div>
+      ${list.map(s=>{
+        const asgn=(state.rooms||[]).find(r=>r.activeStaff?.id===s.id);
+        return `<div class="staff-row">
+          <div class="staff-av" style="background:${asgn?color:'var(--subtle)'}">${s.avatar}</div>
+          <div style="flex:1"><div class="staff-name">${s.name}</div><div class="staff-id">${s.id}</div></div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:${asgn?color:'var(--border)'}"></div>
+            <span style="font-size:10px;font-family:monospace;color:${asgn?color:'var(--muted)'}">${asgn?`Hab. ${asgn.number}`:'Libre'}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('content').innerHTML=`
+    <div class="staff-grid">
+      ${sec('🧹 LIMPIEZA','var(--green)',cleaning)}
+      <div>
+        ${sec('🔧 MANTENIMIENTO','var(--orange)',maintenance)}
+        <div class="savings-box">
+          <div class="savings-lbl">⚡ AHORRO ACUMULADO HOY</div>
+          <div class="savings-big">DOP $${Number(e.dop).toFixed(2)}</div>
+          <div class="savings-sub">${Number(e.kwh).toFixed(3)} kWh · ${idleNow} hab. en idle · @DOP$9.53/kWh</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Sidebar ────────────────────────────────────────────────
+function renderSidebar(){
+  const evs=state.events||[];
+  document.getElementById('evCount').textContent=`${evs.length} eventos`;
+  document.getElementById('evFeed').innerHTML=evs.length===0
+    ?`<div style="color:var(--border);text-align:center;padding:40px;font-family:monospace;font-size:11px;">Esperando eventos…</div>`
+    :evs.map(e=>`<div class="event-item ${e.type}"><div><div class="event-txt">${e.text}</div><div class="event-time">${e.time}</div></div></div>`).join('');
+  const wa=state.whatsappLog||[];
+  document.getElementById('waCount').textContent=wa.length;
+  document.getElementById('waLog').innerHTML=wa.slice(0,5).map(w=>`
+    <div style="font-size:9px;color:var(--muted);padding:2px 0;border-bottom:1px solid var(--border);font-family:monospace;">
+      📱 ${w.name} · ${w.time?.split(' ')[1]||''}
+    </div>`).join('');
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(wa){
+  if(!wa) return;
+  const id='t'+Date.now();
+  document.getElementById('toastBox').innerHTML=`
+    <div class="toast" id="${id}">
+      <button onclick="document.getElementById('${id}').remove()" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">×</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="toast-icon">💬</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;">${wa.name}</div>
+          <div style="font-size:10px;color:var(--muted);font-family:monospace;">WhatsApp simulado · ${wa.time}</div>
+        </div>
+      </div>
+      <div class="toast-body">${wa.message}</div>
+      <div class="toast-bar"></div>
+    </div>`;
+  setTimeout(()=>document.getElementById(id)?.remove(),7000);
+}
+</script>
+</body>
+</html>

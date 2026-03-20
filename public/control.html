@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<title>SmartStay — Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#03060d;--surface:#070c17;--card:#0b1120;--border:#0e1828;
+  --cyan:#00d4c8;--green:#22c55e;--amber:#f59e0b;--orange:#f97316;
+  --blue:#3b82f6;--red:#ef4444;--violet:#8b5cf6;
+  --text:#e8edf5;--muted:#4a5568;--subtle:#0d1828;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
+  min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:120px;}
+
+/* ── Header ── */
+.ctrl-hd{background:rgba(7,12,23,.97);backdrop-filter:blur(20px);
+  padding:14px 18px 10px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
+.ctrl-logo{display:flex;align-items:center;gap:10px;}
+.ctrl-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#dc2626,#f97316);
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.ctrl-name{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;line-height:1;}
+.ctrl-sub{font-size:9px;color:var(--muted);letter-spacing:1.5px;font-family:monospace;}
+.conn{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-family:monospace;margin-top:6px;}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+.cdot.on{background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── Energy mini bar ── */
+.energy-mini{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);
+  border-radius:12px;padding:12px 16px;margin:12px 14px 0;
+  display:flex;align-items:center;justify-content:space-between;}
+.em-label{font-size:9px;color:var(--amber);font-family:monospace;letter-spacing:1.5px;}
+.em-val{font-family:'Bebas Neue';font-size:22px;color:#fbbf24;line-height:1;}
+.em-sub{font-size:9px;color:var(--muted);font-family:monospace;margin-top:1px;}
+.em-right{text-align:right;}
+.em-idle{font-size:18px;font-weight:700;color:var(--amber);}
+
+/* ── Stats row ── */
+.stats-row{display:flex;gap:7px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;}
+.stats-row::-webkit-scrollbar{display:none;}
+.mstat{flex-shrink:0;background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;text-align:center;min-width:60px;}
+.mstat .v{font-family:'Bebas Neue';font-size:20px;line-height:1;}
+.mstat .l{font-size:9px;color:var(--muted);font-family:monospace;margin-top:1px;}
+
+/* ── Section ── */
+.sec-title{padding:14px 16px 6px;font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;color:var(--muted);}
+
+/* ── Block cards (mobile) ── */
+.blocks-list{padding:0 12px;display:flex;flex-direction:column;gap:10px;}
+.block-ctrl{background:var(--card);border:1px solid var(--border);border-radius:13px;
+  padding:14px 16px;cursor:pointer;transition:all .2s;border-left:3px solid var(--bc,var(--border));}
+.block-ctrl.ba{--bc:var(--cyan);}
+.block-ctrl.bb{--bc:var(--violet);}
+.block-ctrl.bc{--bc:var(--amber);}
+.block-ctrl.bd{--bc:var(--green);}
+.block-ctrl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.block-letter-sm{font-family:'Bebas Neue';font-size:28px;color:var(--bc);line-height:1;}
+.block-name-sm{font-size:11px;color:var(--muted);font-family:monospace;}
+.block-occ-sm{font-size:11px;font-family:monospace;}
+.block-mini-grid{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.mroom{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:8px;font-family:monospace;font-weight:700;border:1px solid;}
+.mroom.occ {background:rgba(0,212,200,.12); color:var(--cyan);  border-color:rgba(0,212,200,.3);}
+.mroom.emp {background:var(--subtle);       color:var(--muted); border-color:var(--border);}
+.mroom.cln {background:rgba(34,197,94,.12); color:var(--green); border-color:rgba(34,197,94,.3);}
+.mroom.mnt {background:rgba(249,115,22,.12);color:var(--orange);border-color:rgba(249,115,22,.3);}
+
+/* ── Back btn ── */
+.back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;
+  color:var(--cyan);cursor:pointer;font-family:'DM Sans';font-size:12px;
+  padding:10px 16px 4px;font-weight:500;}
+
+/* ── Room controls ── */
+.rooms-ctrl-list{padding:0 12px;display:flex;flex-direction:column;gap:9px;}
+.room-ctrl{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;border-left:3px solid var(--rc,var(--border));}
+.room-ctrl.occ{--rc:var(--cyan);}
+.room-ctrl.emp{--rc:var(--muted);}
+.room-ctrl.cln{--rc:var(--green);}
+.room-ctrl.mnt{--rc:var(--orange);}
+.rc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.rc-num-sm{font-family:'Bebas Neue';font-size:20px;color:#fff;line-height:1;}
+.rc-guest-sm{font-size:11px;font-weight:600;color:var(--text);}
+.rc-ph-sm{font-size:9px;color:var(--muted);font-family:monospace;}
+.rc-sys-row{display:flex;gap:6px;margin-bottom:8px;}
+.sys-p{flex:1;background:var(--subtle);border-radius:7px;padding:5px 8px;text-align:center;
+  font-size:10px;font-weight:600;}
+.sys-p.on  {color:var(--cyan);}
+.sys-p.idle{color:var(--amber);}
+.sys-p.off {color:var(--muted);}
+.active-staff-sm{border-radius:7px;padding:6px 9px;margin-bottom:7px;font-size:11px;}
+.active-staff-sm.cleaning   {background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2);color:var(--green);}
+.active-staff-sm.maintenance{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);color:var(--orange);}
+.rc-actions{display:flex;gap:7px;}
+.btn{flex:1;padding:9px 6px;border:none;border-radius:9px;
+  font-family:'DM Sans';font-size:11px;font-weight:600;cursor:pointer;
+  transition:all .12s;-webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.96);}
+.btn-out  {background:#1e3a5f;color:var(--blue);}
+.btn-in   {background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.btn-staff{background:var(--subtle);color:var(--text);}
+.btn-done {background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+
+/* ── Modal ── */
+.modal-ov{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);
+  backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(--surface);border:1px solid var(--border);
+  border-radius:18px 18px 0 0;padding:18px 18px 36px;width:100%;max-width:480px;
+  animation:slideUp .35s cubic-bezier(.16,1,.3,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;}
+.picker-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;
+  margin-bottom:7px;cursor:pointer;background:var(--card);border:1px solid var(--border);}
+.picker-item:active{background:var(--subtle);}
+.picker-item.busy{opacity:.4;cursor:not-allowed;}
+.picker-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+.picker-name{font-size:13px;font-weight:600;}
+.picker-role{font-size:10px;color:var(--muted);font-family:monospace;}
+.picker-st{margin-left:auto;font-size:10px;font-family:monospace;padding:2px 9px;
+  border-radius:18px;border:1px solid;}
+.picker-st.free{color:var(--green);border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.07);}
+.picker-st.busy{color:var(--muted);border-color:var(--border);}
+
+/* ── Report + Reset ── */
+.action-row{padding:14px 12px 0;display:flex;gap:8px;}
+.act-btn{flex:1;padding:11px;border-radius:10px;border:1px solid;
+  font-family:'DM Sans';font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.act-btn:active{opacity:.7;}
+.act-report{background:rgba(0,212,200,.07);border-color:rgba(0,212,200,.25);color:var(--cyan);}
+.act-reset {background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.2);color:var(--red);}
+
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-thumb{background:var(--border);}
+</style>
+</head>
+<body>
+<div class="ctrl-hd">
+  <div class="ctrl-logo">
+    <div class="ctrl-icon">🎛️</div>
+    <div>
+      <div class="ctrl-name">PANEL DE CONTROL</div>
+      <div class="ctrl-sub">SMARTSTAY · OPERADOR</div>
+    </div>
+  </div>
+  <div class="conn"><div class="cdot" id="cd"></div><span id="cl">Conectando…</span></div>
+</div>
+
+<div class="energy-mini">
+  <div>
+    <div class="em-label">⚡ AHORRO HOY</div>
+    <div class="em-val" id="emVal">DOP $0.00</div>
+    <div class="em-sub" id="emSub">0.000 kWh ahorrados</div>
+  </div>
+  <div class="em-right">
+    <div class="em-idle" id="emIdle">0</div>
+    <div style="font-size:9px;color:var(--muted);font-family:monospace;">HAB. IDLE</div>
+  </div>
+</div>
+
+<div class="stats-row" id="statsRow"></div>
+<div id="mainContent"></div>
+
+<div class="action-row">
+  <button class="act-btn act-report" onclick="sendReport()">📧 Enviar Resumen</button>
+  <button class="act-btn act-reset"  onclick="sendAction('RESET',{})">🔄 Reiniciar</button>
+</div>
+
+<div id="modalBox" style="display:none">
+  <div class="modal-ov" onclick="closeModal(event)">
+    <div class="modal">
+      <div class="modal-title">
+        <span id="modalTitle">ASIGNAR PERSONAL</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BLOCK_COLORS={A:'var(--cyan)',B:'var(--violet)',C:'var(--amber)',D:'var(--green)'};
+const BLOCK_NAMES={A:'Ala Norte',B:'Ala Sur',C:'Ala Este',D:'Ala Oeste'};
+const BLOCK_CLS={A:'ba',B:'bb',C:'bc',D:'bd'};
+const STATUS_CLS={occupied:'occ',empty:'emp',cleaning:'cln',maintenance:'mnt'};
+
+let state={rooms:[],staff:[],energy:{kwh:0,dop:0}};
+let ws, activeBlock=null, pendingRoomId=null;
+
+function connect(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}`);
+  ws.onopen=()=>{document.getElementById('cd').classList.add('on');document.getElementById('cl').textContent='Conectado';};
+  ws.onmessage=e=>{
+    const {type,payload}=JSON.parse(e.data);
+    if(type==='STATE'){state=payload;render();}
+  };
+  ws.onclose=()=>{document.getElementById('cd').classList.remove('on');document.getElementById('cl').textContent='Reconectando…';setTimeout(connect,2500);};
+}
+connect();
+
+function sendAction(action,payload){
+  if(ws&&ws.readyState===1) ws.send(JSON.stringify({action,payload}));
+}
+
+async function sendReport(){
+  sendAction('SEND_REPORT',{});
+  alert('📧 Resumen ejecutivo enviado (simulado).\nEn producción se envía por SendGrid a los destinatarios configurados.');
+}
+
+function render(){
+  const e=state.energy||{kwh:0,dop:0};
+  const r=state.rooms||[];
+  const idleNow=r.filter(x=>x.hvacMode==='idle').length;
+  document.getElementById('emVal').textContent=`DOP $${Number(e.dop).toFixed(2)}`;
+  document.getElementById('emSub').textContent=`${Number(e.kwh).toFixed(3)} kWh ahorrados`;
+  document.getElementById('emIdle').textContent=idleNow;
+  renderStats();
+  if(activeBlock) renderRooms(activeBlock);
+  else renderBlocks();
+}
+
+function renderStats(){
+  const r=state.rooms||[];
+  const s=[
+    {val:r.filter(x=>x.status==='occupied').length,    lbl:'Ocup.', c:'var(--cyan)'},
+    {val:r.filter(x=>x.status==='empty').length,       lbl:'Libre', c:'var(--muted)'},
+    {val:r.filter(x=>x.status==='cleaning').length,    lbl:'Limp.', c:'var(--green)'},
+    {val:r.filter(x=>x.status==='maintenance').length, lbl:'Mant.', c:'var(--orange)'},
+    {val:r.filter(x=>x.hvacMode==='idle').length,      lbl:'Idle',  c:'var(--amber)'},
+  ];
+  document.getElementById('statsRow').innerHTML=s.map(x=>`
+    <div class="mstat"><div class="v" style="color:${x.c}">${x.val}</div><div class="l">${x.lbl}</div></div>
+  `).join('');
+}
+
+function renderBlocks(){
+  const rooms=state.rooms||[];
+  const blocks=['A','B','C','D'].map(b=>{
+    const br=rooms.filter(r=>r.block===b);
+    return {b,br,occ:br.filter(r=>['occupied','cleaning','maintenance'].includes(r.status)).length,total:br.length};
+  });
+  document.getElementById('mainContent').innerHTML=`
+    <div class="sec-title">ALAS DEL HOTEL</div>
+    <div class="blocks-list">
+      ${blocks.map(({b,br,occ,total})=>`
+      <div class="block-ctrl ${BLOCK_CLS[b]}" onclick="drillBlock('${b}')">
+        <div class="block-ctrl-top">
+          <div>
+            <div class="block-letter-sm" style="color:${BLOCK_COLORS[b]}">Ala ${b} · ${BLOCK_NAMES[b]}</div>
+          </div>
+          <span class="block-occ-sm" style="color:${BLOCK_COLORS[b]};font-family:monospace;">${occ}/${total} ocup.</span>
+        </div>
+        <div class="block-mini-grid">
+          ${br.map(r=>`<div class="mroom ${STATUS_CLS[r.status]||'emp'}" title="${r.number}">${r.number}</div>`).join('')}
+        </div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function drillBlock(b){
+  activeBlock=b; renderRooms(b);
+}
+
+function renderRooms(b){
+  const rooms=(state.rooms||[]).filter(r=>r.block===b);
+  const busyIds=(state.rooms||[]).filter(r=>r.activeStaff).map(r=>r.activeStaff.id);
+  document.getElementById('mainContent').innerHTML=`
+    <button class="back-btn" onclick="activeBlock=null;render()">← Todas las alas</button>
+    <div style="padding:0 16px 6px;font-family:monospace;font-size:11px;color:${BLOCK_COLORS[b]}">
+      ALA ${b} · ${BLOCK_NAMES[b]}
+    </div>
+    <div class="rooms-ctrl-list">
+      ${rooms.map(r=>{
+        const sc=STATUS_CLS[r.status]||'emp';
+        const hvacOn=r.hvacMode==='comfort';
+        return `
+        <div class="room-ctrl ${sc}">
+          <div class="rc-top">
+            <div>
+              <div class="rc-num-sm">Hab. ${r.number}</div>
+              <div class="rc-guest-sm">${r.guest.name}</div>
+              <div class="rc-ph-sm">${r.guest.phone}</div>
+            </div>
+          </div>
+          <div class="rc-sys-row">
+            <div class="sys-p ${hvacOn?'on':'idle'}">${hvacOn?'❄️ Comfort':'😴 Idle'}</div>
+            <div class="sys-p ${r.lightsOn?'on':'off'}">${r.lightsOn?'💡 ON':'🌑 OFF'}</div>
+            <div class="sys-p ${r.guestPresent?'on':'off'}">${r.guestPresent?'● Presente':'○ Ausente'}</div>
+          </div>
+          ${r.activeStaff?`<div class="active-staff-sm ${r.activeStaff.role}">${r.activeStaff.role==='cleaning'?'🧹':'🔧'} ${r.activeStaff.name} en curso…</div>`:''}
+          <div class="rc-actions">
+            <button class="btn ${r.guestPresent?'btn-out':'btn-in'}" onclick="sendAction('TOGGLE_GUEST',{roomId:${r.id}})">
+              ${r.guestPresent?'🚶 Sale huésped':'🔑 Entra huésped'}
+            </button>
+            ${r.activeStaff
+              ?`<button class="btn btn-done" onclick="sendAction('REMOVE_STAFF',{roomId:${r.id}})">✅ Completado</button>`
+              :`<button class="btn btn-staff" onclick="openPicker(${r.id},'${r.number}')">👤 Personal</button>`
+            }
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── Staff picker ───────────────────────────────────────────
+function openPicker(roomId,roomNum){
+  pendingRoomId=roomId;
+  const staff=state.staff||[];
+  const busy=(state.rooms||[]).filter(r=>r.activeStaff).map(r=>r.activeStaff.id);
+  document.getElementById('modalTitle').textContent=`PERSONAL → HAB. ${roomNum}`;
+  document.getElementById('modalContent').innerHTML=staff.map(s=>{
+    const isBusy=busy.includes(s.id);
+    const color=s.role==='cleaning'?'#166534':'#9a3412';
+    const tc=s.role==='cleaning'?'var(--green)':'var(--orange)';
+    return `
+    <div class="picker-item ${isBusy?'busy':''}" onclick="${isBusy?'':('assign(\''+s.id+'\')')}">
+      <div class="picker-av" style="background:${isBusy?'var(--muted)':color}">${s.avatar}</div>
+      <div>
+        <div class="picker-name">${s.name}</div>
+        <div class="picker-role">${s.role==='cleaning'?'🧹 Limpieza':'🔧 Mantenimiento'} · ${s.id}</div>
+      </div>
+      <span class="picker-st ${isBusy?'busy':'free'}">${isBusy?'Ocupado':'Libre'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('modalBox').style.display='block';
+}
+
+function assign(staffId){
+  if(!pendingRoomId) return;
+  sendAction('SEND_STAFF',{roomId:pendingRoomId,staffId});
+  closeModal();
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.querySelector('.modal-ov')) return;
+  document.getElementById('modalBox').style.display='none';
+  pendingRoomId=null;
+}
+</script>
+</body>
+</html>
